@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { RegionProperties, TooltipState } from '../types/regions'
-
+//
 interface TooltipProps {
   data: TooltipState | null
   label?: string
