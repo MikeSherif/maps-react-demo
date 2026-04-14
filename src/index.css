@@ -1,0 +1,152 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  color: #dbe4f7;
+  background: radial-gradient(circle at top, #172554 0%, #030712 55%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 28px 16px 40px;
+}
+
+.hero {
+  margin-bottom: 22px;
+}
+
+.hero h1 {
+  margin: 8px 0 6px;
+  font-size: clamp(1.7rem, 3.8vw, 2.4rem);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.subtitle {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.maps-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.map-shell {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 20px 35px rgba(2, 6, 23, 0.35);
+}
+
+.map-shell--svg {
+  background: linear-gradient(170deg, #f8fbff, #e5efff);
+}
+
+.map-shell--mapbox {
+  background: linear-gradient(165deg, #0f172a, #020617);
+}
+
+.map-shell--deck {
+  background: linear-gradient(145deg, #0f172a, #111827);
+}
+
+.map-shell--globe {
+  background: linear-gradient(150deg, #030712, #0f172a);
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.map-header h2 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+.map-header p {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.85;
+}
+
+.map-shell--svg .map-header,
+.map-shell--svg .map-header p,
+.map-shell--svg .map-header h2 {
+  color: #0f172a;
+}
+
+.maplibre-canvas,
+.deck-canvas,
+.globe-canvas {
+  width: 100%;
+  height: 460px;
+}
+
+.svg-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2 / 1;
+}
+
+.deck-canvas {
+  position: relative;
+}
+
+.deck-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.region-popup .maplibregl-popup-content {
+  background: #111827;
+  color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 8px 24px rgba(2, 6, 23, 0.6);
+}
+
+.region-popup .maplibregl-popup-tip {
+  border-top-color: #111827 !important;
+}
+
+@media (max-width: 840px) {
+  .map-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .maplibre-canvas,
+  .deck-canvas,
+  .globe-canvas {
+    height: 400px;
+  }
+}
