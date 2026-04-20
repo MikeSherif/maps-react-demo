@@ -59,8 +59,11 @@ export function SvgMap() {
   return (
     <section className="map-shell map-shell--svg">
       <header className="map-header">
-        <h2>SVG Choropleth</h2>
-        <p>Manual path rendering with custom hover transitions and tooltip tracking.</p>
+        <h2>SVG-карта</h2>
+        <p>
+          Ручной рендеринг GeoJSON в SVG-path. Максимальный контроль над версткой,
+          анимациями и кастомным взаимодействием, но слабее масштабируется на очень больших наборах данных.
+        </p>
       </header>
 
       <svg className="svg-map" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img">
@@ -96,7 +99,7 @@ export function SvgMap() {
         })}
       </svg>
 
-      <Tooltip data={tooltip} label="GDP Index" />
+      <Tooltip data={tooltip} label="ВРП" />
     </section>
   )
 }

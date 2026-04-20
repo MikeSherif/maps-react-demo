@@ -1,13 +1,13 @@
 import type { CSSProperties } from 'react'
 import type { RegionProperties, TooltipState } from '../types/regions'
-//
+
 interface TooltipProps {
   data: TooltipState | null
   label?: string
 }
 
 const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('en-US').format(value)
+  return new Intl.NumberFormat('ru-RU').format(value)
 }
 
 const tooltipStyle: CSSProperties = {
@@ -29,7 +29,7 @@ const tooltipStyle: CSSProperties = {
 
 const TooltipContent = ({
   region,
-  label = 'GDP',
+  label = 'ВРП',
 }: {
   region: RegionProperties
   label?: string
@@ -38,7 +38,7 @@ const TooltipContent = ({
     <>
       <strong style={{ display: 'block', marginBottom: 4 }}>{region.region}</strong>
       <div style={{ opacity: 0.9, fontSize: 13 }}>
-        Population: {formatNumber(region.population)}
+        Население: {formatNumber(region.population)}
       </div>
       <div style={{ opacity: 0.9, fontSize: 13 }}>
         {label}: {formatNumber(region.gdp)}

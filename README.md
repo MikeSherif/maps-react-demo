@@ -1,25 +1,38 @@
-# Russia Maps React Demo
+# Демо интерактивных карт России
 
-Interactive demo with **exactly 4 map implementations** of Russia regions, each using a different rendering stack and visual style:
+Проект показывает **4 разных подхода к визуализации карты России** в React-приложении.  
+Все карты работают на одном GeoJSON-источнике с регионами и mock-метриками.
 
-1. **SVG map** (`src/maps/SvgMap.tsx`) - manual GeoJSON-to-path rendering.
-2. **MapLibre GL map** (`src/maps/MapboxMap.tsx`) - dark style, feature-state hover, popup.
-3. **Deck.gl map** (`src/maps/DeckMap.tsx`) - GPU-rendered `GeoJsonLayer`, dynamic gradients, elevation.
-4. **Globe.gl map** (`src/maps/GlobeMap.tsx`) - 3D globe with atmosphere and hover-driven extrusion.
+## Что внутри
 
-All maps use one shared GeoJSON source: `src/data/russia-regions.geojson`.
+1. **SVG-карта** `src/maps/SvgMap.tsx`
+   - Ручной рендеринг GeoJSON в SVG-path.
+   - Подходит, когда нужен полный контроль над DOM, стилями и анимацией.
 
-## Tech Stack
+2. **MapLibre GL** `src/maps/MapboxMap.tsx`
+   - Карта на слоях с hover через `feature-state`.
+   - Удобен для продуктовых карт, навигации и интерактивных UI-кейсов.
+
+3. **Deck.gl** `src/maps/DeckMap.tsx`
+   - GPU-рендеринг через `GeoJsonLayer`.
+   - Хорош для производительных аналитических слоев и плотных наборов данных.
+
+4. **Globe.gl** `src/maps/GlobeMap.tsx`
+   - 3D-глобус с атмосферой и объемными полигонами.
+   - Подходит для эффектной презентации данных и визуального wow-эффекта.
+
+## Стек
 
 - React
 - Vite
 - TypeScript
-- MapLibre GL JS
+- GeoJSON
+- D3
+- MapLibre GL
 - Deck.gl
 - Globe.gl / Three.js
-- D3 (projection + color scales)
 
-## Project Structure
+## Структура проекта
 
 ```txt
 src/
@@ -38,109 +51,90 @@ src/
   App.tsx
 ```
 
-## Installation
+## Запуск
+
+Установка зависимостей:
 
 ```bash
 npm install
 ```
 
-## Run in Development
+Локальная разработка:
 
 ```bash
 npm run dev
 ```
 
-## Production Build
+Сборка production-версии:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## API Keys
+## Деплой на GitHub Pages
 
-No API keys are required.
+В `vite.config.ts` настроен `base` для GitHub Pages, поэтому пути к `assets` и `favicon` корректно подставляются при CI-сборке.
 
-- `MapboxMap.tsx` uses **MapLibre GL with local style + GeoJSON source** (no Mapbox token).
-- Globe textures are loaded from public URLs hosted by `unpkg`.
+## Источник данных
 
-## Notes on Data
+- Основной GeoJSON: `src/data/russia-regions.geojson`
+- Нормализованный слой данных: `src/data/regions.ts`
 
-- The regions GeoJSON is mock/demo-friendly but structured as oblast-like polygons with per-region statistics:
-  - `region`
-  - `population`
-  - `gdp`
-- You can replace `src/data/russia-regions.geojson` with a higher-fidelity administrative dataset without changing map component architecture.
-# React + TypeScript + Vite
+Для каждого региона в интерфейс передаются:
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+- `region`
+- `population`
+- `gdp`
 
-Currently, two official plugins are available:
+Названия регионов теперь берутся в первую очередь из поля `name`, то есть отображаются **на русском языке**.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Сравнение библиотек
 
-## React Compiler
+### SVG
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Плюсы:
+- Полный контроль над разметкой и стилями
+- Просто кастомизировать hover и tooltip
+- Удобно для небольших и средних наборов данных
 
-## Expanding the ESLint configuration
+Минусы:
+- Рендеринг идет через DOM
+- На очень сложной геометрии и больших объемах данных может уступать WebGL
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### MapLibre GL
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Плюсы:
+- Богатая система слоев и состояний
+- Плавный pan/zoom
+- Хорошо подходит для интерактивных продуктовых карт
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Минусы:
+- Требует внимательной настройки источников и стилей
+- Сложнее, чем SVG, когда нужна нестандартная кастомная логика поверх карты
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Deck.gl
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Плюсы:
+- Высокая производительность за счет GPU
+- Отлично подходит для аналитики и data-heavy visualization
+- Удобно кодировать данные в цвет, высоту, прозрачность
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Минусы:
+- Более высокий порог входа
+- Меньше “DOM-подобного” контроля, чем у SVG
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### Globe.gl
+
+Плюсы:
+- Сильный визуальный эффект
+- Хорошо подходит для презентаций и storytelling
+- Есть 3D-камера, атмосфера, объем
+
+Минусы:
+- Хуже читаются точные границы
+- Менее удобно для практического сравнения соседних регионов
+
+## Отдельный файл для выступления
+
+Для презентации подготовлен файл `SPEECH.md`.

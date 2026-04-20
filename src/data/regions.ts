@@ -26,17 +26,17 @@ const estimateMetrics = (name: string, index: number): Pick<RegionProperties, 'p
 }
 
 const getRegionName = (raw: RawRegionFeature, index: number): string => {
-  const nameLatin = raw.properties?.name_latin
-  if (typeof nameLatin === 'string' && nameLatin.trim().length > 0) {
-    return nameLatin
-  }
-
   const name = raw.properties?.name
   if (typeof name === 'string' && name.trim().length > 0) {
     return name
   }
 
-  return `Russian Region ${index + 1}`
+  const nameLatin = raw.properties?.name_latin
+  if (typeof nameLatin === 'string' && nameLatin.trim().length > 0) {
+    return nameLatin
+  }
+
+  return `Регион России ${index + 1}`
 }
 
 export const regionsGeoJson: RegionFeatureCollection = {

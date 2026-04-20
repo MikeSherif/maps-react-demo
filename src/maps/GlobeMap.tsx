@@ -65,8 +65,11 @@ export function GlobeMap() {
       onMouseMove={(event) => setCursor({ x: event.clientX, y: event.clientY })}
     >
       <header className="map-header">
-        <h2>Globe.gl (3D Cinematic)</h2>
-        <p>3D globe with atmospheric lighting, polygon altitude, and hover interactions.</p>
+        <h2>Globe.gl</h2>
+        <p>
+          Эффектная 3D-визуализация с атмосферой, вращением камеры и объемными полигонами.
+          Отлично подходит для презентаций, но хуже для точного чтения границ и сравнения соседних регионов.
+        </p>
       </header>
 
       <div className="globe-canvas" ref={containerRef}>
@@ -99,7 +102,7 @@ export function GlobeMap() {
         />
       </div>
 
-      <Tooltip data={tooltip} label="GDP Index" />
+      <Tooltip data={tooltip} label="ВРП" />
     </section>
   )
 }

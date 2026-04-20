@@ -71,8 +71,11 @@ export function DeckMap() {
   return (
     <section className="map-shell map-shell--deck">
       <header className="map-header">
-        <h2>Deck.gl (GPU Rendering)</h2>
-        <p>High-performance `GeoJsonLayer` with color scaling and elevation encoding.</p>
+        <h2>Deck.gl</h2>
+        <p>
+          GPU-рендеринг через `GeoJsonLayer`: высокая производительность,
+          хорош для плотных данных и аналитических слоев. Минусом является более высокий порог входа и сложность кастомизации.
+        </p>
       </header>
 
       <div className="deck-canvas">
@@ -98,7 +101,7 @@ export function DeckMap() {
           }}
         />
       </div>
-      <Tooltip data={tooltip} label="GDP Index" />
+      <Tooltip data={tooltip} label="ВРП" />
     </section>
   )
 }

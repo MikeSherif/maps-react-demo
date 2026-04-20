@@ -17,6 +17,8 @@ const mapStyle: StyleSpecification = {
   ],
 }
 
+const formatRuNumber = (value: number): string => value.toLocaleString('ru-RU')
+
 export function MapboxMap() {
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -118,7 +120,7 @@ export function MapboxMap() {
         popup
           .setLngLat(event.lngLat)
           .setHTML(
-            `<strong>${region}</strong><br/>Population: ${population.toLocaleString('en-US')}<br/>GDP: ${gdp.toLocaleString('en-US')}`,
+            `<strong>${region}</strong><br/>Население: ${formatRuNumber(population)}<br/>ВРП: ${formatRuNumber(gdp)}`,
           )
           .addTo(map)
       })
@@ -142,8 +144,11 @@ export function MapboxMap() {
   return (
     <section className="map-shell map-shell--mapbox">
       <header className="map-header">
-        <h2>MapLibre GL (Dark Theme)</h2>
-        <p>Feature-state hover highlighting, live popup stats, and smooth pan/zoom.</p>
+        <h2>MapLibre GL</h2>
+        <p>
+          Современная веб-карта с плавным pan/zoom, слоями и `feature-state`.
+          Сильна в интерактивных картах приложений, но требует аккуратной настройки источников и стилей.
+        </p>
       </header>
       <div className="maplibre-canvas" ref={containerRef} />
     </section>

@@ -7,10 +7,10 @@ function App() {
   return (
     <main className="app">
       <header className="hero">
-        <p className="eyebrow">React + Vite + TypeScript + GeoJSON</p>
-        <h1>Russia Interactive Maps Demo</h1>
+
+        <h1>Карты России</h1>
         <p className="subtitle">
-          Four visualization stacks, one dataset: SVG, MapLibre GL, Deck.gl, and Globe.gl.
+          Четыре подхода к визуализации на одном наборе данных: SVG, MapLibre GL, Deck.gl и Globe.gl.
         </p>
       </header>
 
