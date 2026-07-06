@@ -1,12 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import DeckGL from '@deck.gl/react'
 import { GeoJsonLayer } from '@deck.gl/layers'
-import type { PickingInfo } from '@deck.gl/core'
-import { scaleSequential } from 'd3-scale'
-import { interpolateTurbo } from 'd3-scale-chromatic'
+import { LightingEffect, AmbientLight, DirectionalLight, type PickingInfo } from '@deck.gl/core'
+import { scaleQuantile } from 'd3-scale'
+import { schemeOranges, schemeBlues } from 'd3-scale-chromatic'
 import { regionsGeoJson, regionValueExtent } from '../data/regions'
 import { Tooltip } from '../components/Tooltip'
-import type { RegionFeature, RegionProperties, TooltipState } from '../types/regions'
+import { Legend } from '../components/Legend'
+import type { Metric, RegionFeature, RegionProperties, TooltipState } from '../types/regions'
+
+const ambientLight = new AmbientLight({ color: [255, 255, 255], intensity: 0.5 })
+const directionalLight = new DirectionalLight({
+  color: [255, 255, 255],
+  direction: [-3, -10, -1],
+  intensity: 1.2,
+})
+const lightingEffect = new LightingEffect({ ambientLight, directionalLight })
 
 const initialViewState = {
   longitude: 92,
@@ -18,16 +27,36 @@ const initialViewState = {
   bearing: 2,
 }
 
-export function DeckMap() {
+const hexToRgb = (hex: string): [number, number, number] => {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return [r, g, b]
+}
+
+interface DeckMapProps {
+  metric: Metric
+  onRegionClick: (region: RegionProperties) => void
+}
+
+export function DeckMap({ metric, onRegionClick }: DeckMapProps) {
+  const canvasRef = useRef<HTMLDivElement | null>(null)
   const [hoveredName, setHoveredName] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
   const colorScale = useMemo(() => {
-    return scaleSequential(interpolateTurbo).domain([
-      regionValueExtent.minPopulation,
-      regionValueExtent.maxPopulation,
-    ])
-  }, [])
+    const values = regionsGeoJson.features.map((f) =>
+      metric === 'gdp' ? f.properties.gdp : f.properties.population,
+    )
+    const scheme = metric === 'gdp' ? schemeBlues[8] : schemeOranges[8]
+    return scaleQuantile<string>().domain(values).range(scheme)
+  }, [metric])
+
+  const elevationExtent = useMemo(() => {
+    return metric === 'gdp'
+      ? { min: regionValueExtent.minGdp, max: regionValueExtent.maxGdp }
+      : { min: regionValueExtent.minPopulation, max: regionValueExtent.maxPopulation }
+  }, [metric])
 
   const layer = useMemo(() => {
     return new GeoJsonLayer<RegionProperties>({
@@ -36,20 +65,20 @@ export function DeckMap() {
       pickable: true,
       filled: true,
       stroked: true,
-      lineWidthMinPixels: 1.2,
-      getLineColor: [255, 255, 255, 235],
+      lineWidthMinPixels: 1,
+      getLineColor: [255, 255, 255, 200],
       getFillColor: (feature) => {
-        const rgb = colorScale(feature.properties.population)
-          .replace('rgb(', '')
-          .replace(')', '')
-          .split(',')
-          .map((value: string) => Number(value.trim()))
-
-        const [r, g, b] = rgb
+        const value = metric === 'gdp' ? feature.properties.gdp : feature.properties.population
+        const hex = colorScale(value)
+        const rgb = hexToRgb(hex)
         const isHovered = hoveredName === feature.properties.region
-        return [r, g, b, isHovered ? 255 : 195]
+        return [...rgb, isHovered ? 255 : 200] as [number, number, number, number]
       },
-      getElevation: (feature) => feature.properties.gdp / 1750,
+      getElevation: (feature) => {
+        const value = metric === 'gdp' ? feature.properties.gdp : feature.properties.population
+        const range = elevationExtent.max - elevationExtent.min
+        return range > 0 ? ((value - elevationExtent.min) / range) * 600000 : 0
+      },
       extruded: true,
       wireframe: false,
       material: {
@@ -63,10 +92,19 @@ export function DeckMap() {
         getElevation: 250,
       },
       updateTriggers: {
-        getFillColor: hoveredName,
+        getFillColor: [hoveredName, metric],
+        getElevation: metric,
+      },
+      onClick: (info) => {
+        const feature = info.object as RegionFeature | null
+        if (feature) onRegionClick(feature.properties)
       },
     })
-  }, [colorScale, hoveredName])
+  }, [colorScale, hoveredName, metric, elevationExtent, onRegionClick])
+
+  const minVal = metric === 'gdp' ? regionValueExtent.minGdp : regionValueExtent.minPopulation
+  const maxVal = metric === 'gdp' ? regionValueExtent.maxGdp : regionValueExtent.maxPopulation
+  const scheme = metric === 'gdp' ? schemeBlues[8] : schemeOranges[8]
 
   return (
     <section className="map-shell map-shell--deck">
@@ -78,11 +116,12 @@ export function DeckMap() {
         </p>
       </header>
 
-      <div className="deck-canvas">
+      <div className="deck-canvas" ref={canvasRef}>
         <DeckGL
           initialViewState={initialViewState}
           controller
           layers={[layer]}
+          effects={[lightingEffect]}
           getCursor={() => (hoveredName ? 'pointer' : 'grab')}
           onHover={(info: PickingInfo) => {
             const feature = info.object as RegionFeature | null
@@ -91,17 +130,25 @@ export function DeckMap() {
               setTooltip(null)
               return
             }
-
+            // info.x/y are relative to the canvas; convert to viewport coords.
+            const rect = canvasRef.current?.getBoundingClientRect()
+            const x = rect ? rect.left + info.x : info.x
+            const y = rect ? rect.top + info.y : info.y
             setHoveredName(feature.properties.region)
-            setTooltip({
-              x: info.x,
-              y: info.y,
-              region: feature.properties,
-            })
+            setTooltip({ x, y, region: feature.properties })
           }}
         />
       </div>
-      <Tooltip data={tooltip} label="ВРП" />
+
+      <Legend
+        metric={metric}
+        min={minVal}
+        max={maxVal}
+        colorA={scheme[1]}
+        colorB={scheme[7]}
+      />
+
+      {tooltip && <Tooltip x={tooltip.x} y={tooltip.y} region={tooltip.region} metric={metric} />}
     </section>
   )
 }

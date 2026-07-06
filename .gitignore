@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Reports and helper scripts
+*.docx
+generate_report.py
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,5 +1,7 @@
 export type Position = [number, number]
 
+export type Metric = 'gdp' | 'population'
+
 export interface PolygonGeometry {
   type: 'Polygon'
   coordinates: Position[][]
@@ -16,6 +18,10 @@ export interface RegionProperties {
   region: string
   population: number
   gdp: number
+  populationRank: number
+  gdpRank: number
+  populationShare: number
+  gdpShare: number
 }
 
 export interface RegionFeature {

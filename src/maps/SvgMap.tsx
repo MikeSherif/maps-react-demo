@@ -1,25 +1,33 @@
 import { useMemo, useState, type MouseEvent } from 'react'
 import { geoMercator, geoPath, type GeoPermissibleObjects } from 'd3-geo'
-import { scaleSequential } from 'd3-scale'
-import { interpolateBlues } from 'd3-scale-chromatic'
+import { scaleQuantile } from 'd3-scale'
+import { schemeBlues, schemeOranges } from 'd3-scale-chromatic'
 import type { FeatureCollection, Geometry } from 'geojson'
 import { regionsGeoJson, regionValueExtent } from '../data/regions'
 import { Tooltip } from '../components/Tooltip'
-import type { RegionFeature, TooltipState } from '../types/regions'
+import { Legend } from '../components/Legend'
+import type { Metric, RegionFeature, RegionProperties, TooltipState } from '../types/regions'
 
 const WIDTH = 920
 const HEIGHT = 460
+const LABEL_MIN_WIDTH = 32
 
-export function SvgMap() {
+interface SvgMapProps {
+  metric: Metric
+  onRegionClick: (region: RegionProperties) => void
+}
+
+export function SvgMap({ metric, onRegionClick }: SvgMapProps) {
   const [hoveredName, setHoveredName] = useState<string | null>(null)
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
   const colorScale = useMemo(() => {
-    return scaleSequential(interpolateBlues).domain([
-      regionValueExtent.minGdp,
-      regionValueExtent.maxGdp,
-    ])
-  }, [])
+    const values = regionsGeoJson.features.map((f) =>
+      metric === 'gdp' ? f.properties.gdp : f.properties.population,
+    )
+    const scheme = metric === 'gdp' ? schemeBlues[8] : schemeOranges[8]
+    return scaleQuantile<string>().domain(values).range(scheme)
+  }, [metric])
 
   const projection = useMemo(() => {
     return geoMercator().fitExtent(
@@ -33,28 +41,33 @@ export function SvgMap() {
 
   const pathGenerator = useMemo(() => geoPath(projection), [projection])
 
-  const onEnter = (
-    feature: RegionFeature,
-    event: MouseEvent<SVGPathElement>,
-  ) => {
-    setHoveredName(feature.properties.region)
-    setTooltip({
-      x: event.clientX,
-      y: event.clientY,
-      region: feature.properties,
+  const centroids = useMemo(() => {
+    return regionsGeoJson.features.map((feature) => {
+      const bounds = pathGenerator.bounds(
+        feature as unknown as GeoPermissibleObjects,
+      )
+      const bboxWidth = bounds[1][0] - bounds[0][0]
+      if (bboxWidth < LABEL_MIN_WIDTH) return null
+      const centroid = pathGenerator.centroid(
+        feature as unknown as GeoPermissibleObjects,
+      )
+      if (!centroid || !isFinite(centroid[0]) || !isFinite(centroid[1])) return null
+      return { name: feature.properties.region, cx: centroid[0], cy: centroid[1] }
     })
+  }, [pathGenerator])
+
+  const onEnter = (feature: RegionFeature, event: MouseEvent<SVGPathElement>) => {
+    setHoveredName(feature.properties.region)
+    setTooltip({ x: event.clientX, y: event.clientY, region: feature.properties })
   }
 
-  const onMove = (
-    feature: RegionFeature,
-    event: MouseEvent<SVGPathElement>,
-  ) => {
-    setTooltip({
-      x: event.clientX,
-      y: event.clientY,
-      region: feature.properties,
-    })
+  const onMove = (feature: RegionFeature, event: MouseEvent<SVGPathElement>) => {
+    setTooltip({ x: event.clientX, y: event.clientY, region: feature.properties })
   }
+
+  const minVal = metric === 'gdp' ? regionValueExtent.minGdp : regionValueExtent.minPopulation
+  const maxVal = metric === 'gdp' ? regionValueExtent.maxGdp : regionValueExtent.maxPopulation
+  const scheme = metric === 'gdp' ? schemeBlues[8] : schemeOranges[8]
 
   return (
     <section className="map-shell map-shell--svg">
@@ -70,18 +83,17 @@ export function SvgMap() {
         {regionsGeoJson.features.map((feature) => {
           const regionName = feature.properties.region
           const isHovered = hoveredName === regionName
+          const value = metric === 'gdp' ? feature.properties.gdp : feature.properties.population
 
           return (
             <path
               key={regionName}
-              d={
-                pathGenerator(feature as unknown as GeoPermissibleObjects) ?? ''
-              }
-              fill={colorScale(feature.properties.gdp)}
+              d={pathGenerator(feature as unknown as GeoPermissibleObjects) ?? ''}
+              fill={colorScale(value)}
               stroke="#ffffff"
-              strokeWidth={isHovered ? 2.3 : 1.2}
+              strokeWidth={isHovered ? 2.3 : 0.7}
               style={{
-                opacity: isHovered ? 1 : 0.85,
+                opacity: isHovered ? 1 : 0.88,
                 transition: 'all 160ms ease',
                 filter: isHovered
                   ? 'drop-shadow(0px 0px 9px rgba(37, 99, 235, 0.75))'
@@ -94,12 +106,46 @@ export function SvgMap() {
                 setHoveredName(null)
                 setTooltip(null)
               }}
+              onClick={() => onRegionClick(feature.properties)}
             />
+          )
+        })}
+
+        {centroids.map((c) => {
+          if (!c) return null
+          return (
+            <text
+              key={`lbl-${c.name}`}
+              x={c.cx}
+              y={c.cy}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontSize={9}
+              fill="#0f172a"
+              style={{
+                pointerEvents: 'none',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 500,
+                paintOrder: 'stroke',
+                stroke: 'rgba(255,255,255,0.7)',
+                strokeWidth: 2.5,
+              }}
+            >
+              {c.name.length > 14 ? c.name.slice(0, 13) + '…' : c.name}
+            </text>
           )
         })}
       </svg>
 
-      <Tooltip data={tooltip} label="ВРП" />
+      <Legend
+        metric={metric}
+        min={minVal}
+        max={maxVal}
+        colorA={scheme[1]}
+        colorB={scheme[7]}
+      />
+
+      {tooltip && <Tooltip x={tooltip.x} y={tooltip.y} region={tooltip.region} metric={metric} />}
     </section>
   )
 }
